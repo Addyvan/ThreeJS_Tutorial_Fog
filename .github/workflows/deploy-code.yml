@@ -4,7 +4,7 @@ on:
     branches:
       - main
 jobs:
-  deploy-valheim-helm-chart:
+  build-n-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -16,6 +16,13 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '15'
+
+      - name: build
+        run: |
+          npm install --dev
+          npm run build
+          mkdir dist
+          cp -r public/* dist/
       
       - name: Checkout gh-pages branch
         uses: actions/checkout@v1
@@ -23,12 +30,17 @@ jobs:
           ref: 'gh-pages'
           clean: false
       
+      - name: unpack dist changes
+        run: |
+          cp -r dist/* ./
+          rm -rf dist
+      
       - name: commit index changes
         run: |
-          git add index.yaml
+          git add .
           git config --local user.email ${{ secrets.GIT_EMAIL }}
           git config --local user.name addyvan
-          git commit -m "release $version" || echo "No changes to commit"
+          git commit -m "automated release" || echo "No changes to commit"
       
       - name: Push changes
         uses: ad-m/github-push-action@master
